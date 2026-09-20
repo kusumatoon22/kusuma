@@ -188,7 +188,7 @@
   .btn-danger-outline.confirming{ background: var(--danger); color: var(--danger-ink); border-color: var(--danger); }
   .btn-sm{ padding: 7px 13px; font-size: 13px; }
 
-  select, input[type=text], input[type=number], textarea{
+  select, input[type=text], input[type=number], input[type=password], textarea{
     font-family: inherit;
     background: var(--panel-2);
     border: 1px solid var(--panel-edge);
@@ -363,6 +363,14 @@
   }
   .overlay-actions{ display:flex; justify-content:flex-end; gap: 10px; flex-wrap: wrap; }
 
+  /* ---------- admin PIN lock ---------- */
+  .tab-lock-icon{ width:14px; height:14px; display:inline-block; vertical-align:-2px; margin-inline-end:5px; opacity:.75; }
+  .pin-panel{ max-width: 380px; }
+  .pin-desc{ margin: 0 0 16px; color: var(--text-dim); font-size: 14px; line-height:1.5; }
+  .pin-form{ display:flex; flex-direction:column; gap:10px; }
+  #pinInput{ letter-spacing: 4px; font-size:18px; text-align:center; }
+  .pin-error{ margin:0; color: var(--danger-text); font-size: 13px; font-weight:600; }
+
   /* ---------- manage view ---------- */
   .manage-grid{ display:grid; grid-template-columns: 240px 1fr; gap: 20px; align-items:start; }
   @media (max-width: 760px){ .manage-grid{ grid-template-columns: 1fr; } }
@@ -445,7 +453,7 @@
     <div class="header-controls">
       <nav class="tabs" role="tablist" aria-label="เมนูหลัก">
         <button type="button" class="tab-btn active" data-view="play" role="tab" aria-selected="true">เล่นเกม</button>
-        <button type="button" class="tab-btn" data-view="manage" role="tab" aria-selected="false">จัดการคำถาม</button>
+        <button type="button" class="tab-btn" data-view="manage" role="tab" aria-selected="false"><svg class="tab-lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>จัดการคำถาม</button>
       </nav>
       <button type="button" id="soundToggleBtn" class="sound-toggle" aria-pressed="true" aria-label="ปิดเสียง"></button>
     </div>
@@ -531,6 +539,24 @@
       <button type="button" id="closeOverlayBtn" class="btn btn-ghost">ปิดหน้าต่าง</button>
       <button type="button" id="markDoneBtn" class="btn btn-done">ตอบแล้ว ปิดป้ายนี้</button>
     </div>
+  </div>
+</div>
+
+<div id="pinOverlay" class="overlay" hidden>
+  <div class="overlay-backdrop" data-close="1"></div>
+  <div class="overlay-panel pin-panel" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+    <div class="overlay-head">
+      <span class="tile-badge" id="pinTitle">เข้าสู่ระบบแอดมิน</span>
+    </div>
+    <p class="pin-desc">ต้องเป็นแอดมินเท่านั้นจึงจะแก้ไขชุดคำถามหรือคำถามได้ กรุณากรอกรหัสผ่าน</p>
+    <form id="pinForm" class="pin-form">
+      <input type="password" id="pinInput" placeholder="รหัสผ่าน" inputmode="numeric" autocomplete="off" required>
+      <p id="pinError" class="pin-error" hidden>รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่</p>
+      <div class="overlay-actions">
+        <button type="button" id="pinCancelBtn" class="btn btn-ghost">ยกเลิก</button>
+        <button type="submit" class="btn btn-gold">ยืนยัน</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -830,14 +856,65 @@
     toastTimer = setTimeout(()=>{ els.toast.hidden = true; }, 3200);
   }
 
+  /* ---------- admin PIN lock ---------- */
+  const ADMIN_PASSWORD = '1234';
+  let manageUnlocked = false;
+  try{ manageUnlocked = sessionStorage.getItem('tileboard_admin_v1') === '1'; }catch(e){}
+
+  const pinOverlay = $('#pinOverlay');
+  const pinForm = $('#pinForm');
+  const pinInput = $('#pinInput');
+  const pinError = $('#pinError');
+  const pinCancelBtn = $('#pinCancelBtn');
+  let pendingUnlockCallback = null;
+
+  function openPinModal(onUnlock){
+    pendingUnlockCallback = onUnlock || null;
+    pinError.hidden = true;
+    pinInput.value = '';
+    pinOverlay.hidden = false;
+    setTimeout(()=>{ pinInput.focus(); }, 30);
+  }
+  function closePinModal(){
+    pinOverlay.hidden = true;
+    pendingUnlockCallback = null;
+  }
+  pinForm.addEventListener('submit', e=>{
+    e.preventDefault();
+    if(pinInput.value === ADMIN_PASSWORD){
+      manageUnlocked = true;
+      try{ sessionStorage.setItem('tileboard_admin_v1', '1'); }catch(err){}
+      const cb = pendingUnlockCallback;
+      closePinModal();
+      if(cb) cb();
+    } else {
+      pinError.hidden = false;
+      pinInput.value = '';
+      pinInput.focus();
+    }
+  });
+  pinCancelBtn.addEventListener('click', closePinModal);
+  pinOverlay.querySelector('[data-close]').addEventListener('click', closePinModal);
+  document.addEventListener('keydown', e=>{
+    if(e.key === 'Escape' && !pinOverlay.hidden) closePinModal();
+  });
+
   /* ---------- tabs ---------- */
+  function activateTab(btn){
+    document.querySelectorAll('.tab-btn').forEach(b=>{ b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+    btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+    const view = btn.dataset.view;
+    $('#view-play').hidden = view !== 'play';
+    $('#view-manage').hidden = view !== 'manage';
+  }
   document.querySelectorAll('.tab-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.tab-btn').forEach(b=>{ b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
-      btn.classList.add('active'); btn.setAttribute('aria-selected','true');
       const view = btn.dataset.view;
-      $('#view-play').hidden = view !== 'play';
-      $('#view-manage').hidden = view !== 'manage';
+      if(view === 'manage' && !manageUnlocked){
+        openPinModal(()=> activateTab(btn));
+        return;
+      }
+      activateTab(btn);
     });
   });
 
