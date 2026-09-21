@@ -444,7 +444,7 @@
         </label>
         <label class="control">
           <span class="control-label">จำนวนแผ่นป้าย</span>
-          <input type="number" id="tileCountInput" min="1" max="99" value="12">
+          <input type="number" id="tileCountInput" min="1" max="99" value="19">
         </label>
         <button type="button" id="newGameBtn" class="btn btn-gold">เริ่มเกมใหม่ (สุ่ม)</button>
         <button type="button" id="resetBoardBtn" class="btn btn-teal-outline">เปิดป้ายใหม่</button>
@@ -567,20 +567,27 @@
   "use strict";
 
   const ADMIN_PIN = "1234";
-  const DEFAULT_SET_NAME = "ผู้พิทักษ์ข้อมูลส่วนตัว (PDPA)";
+  const DEFAULT_SET_NAME = "เธเธนเนเธเธดเธ—เธฑเธเธฉเนเธเนเธญเธกเธนเธฅเธชเนเธงเธเธ•เธฑเธง";
   const DEFAULT_QUESTIONS = [
-    { text: "ข้อมูลใดต่อไปนี้ถือเป็น 'ข้อมูลส่วนบุคคล' ที่ต้องระมัดระวังในการเผยแพร่?", answer: "ชื่อ-นามสกุล, เลขบัตรประชาชน, เบอร์โทรศัพท์, ที่อยู่", points: 100 },
-    { text: "หากมีคนแปลกหน้าทักแชตมาขอรูปถ่ายและที่อยู่บ้านของนักเรียน ควรทำอย่างไร?", answer: "ปฏิเสธทันที และรีบแจ้งผู้ปกครองหรือคุณครูให้ทราบ", points: 100 },
-    { text: "การตั้งรหัสผ่าน (Password) บัญชีเกมหรืออีเมลที่ปลอดภัยควรเป็นอย่างไร?", answer: "มีความยาวอย่างน้อย 8 ตัวอักษร มีทั้งตัวพิมพ์ใหญ่ พิมพ์เล็ก ตัวเลข และสัญลักษณ์", points: 100 },
-    { text: "การนำภาพถ่ายเพื่อนที่กำลังทำหน้าตลกไปโพสต์ลงโซเชียลมีเดียโดยไม่ได้รับอนุญาต ถูกต้องหรือไม่?", answer: "ไม่ถูกต้อง เพราะเป็นการละเมิดสิทธิและความเป็นส่วนตัวของผู้อื่น", points: 100 },
-    { text: "ข้อใดเป็น 'ข้อมูลส่วนบุคคลที่มีความอ่อนไหว' (Sensitive Data)?", answer: "ข้อมูลศาสนา, เชื้อชาติ, ลายนิ้วมือ, ประวัติสุขภาพ/การรักษาพยาบาล", points: 100 },
-    { text: "เมื่อเลิกใช้งานคอมพิวเตอร์ที่โรงเรียนหรือร้านอินเทอร์เน็ต สิ่งสำคัญที่สุดที่ต้องทำคืออะไร?", answer: "กดออกจากระบบ (Log out) ทุกครั้ง", points: 100 },
-    { text: "หากพบข้อความชวนเชื่อว่า 'แจกไอเทมเกมฟรี แค่กรอกรหัสผ่านและเบอร์โทร' นักเรียนควรทำอย่างไร?", answer: "ไม่กรอกข้อมูลเด็ดขาด เพราะอาจเป็นกลโกงขโมยบัญชี (Phishing)", points: 100 },
-    { text: "PDPA ย่อมาจากอะไรในภาษาไทย?", answer: "พระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล", points: 100 },
-    { text: "เราควรเปิดเผยข้อมูลตำแหน่งที่อยู่แบบเรียลไทม์ (Check-in) สาธารณะตลอดเวลาหรือไม่ เพราะเหตุใด?", answer: "ไม่ควร เพราะผู้ไม่หวังดีอาจทราบการเคลื่อนไหวและเกิดอันตรายได้", points: 100 },
-    { text: "หากมีคนแอบอ้างนำรูปของเราไปสร้างบัญชีปลอม ควรทำอย่างไรเป็นอันดับแรก?", answer: "กดรายงาน (Report) บัญชีปลอมนั้น และแจ้งผู้ปกครองหรือคุณครู", points: 100 },
-    { text: "การแชร์รหัสผ่านให้เพื่อนสนิทช่วยเข้าไปล็อกอินเล่นเกมแทน มีความเสี่ยงอย่างไร?", answer: "อาจถูกแอบแก้ไขข้อมูล หรือรหัสผ่านรั่วไหลไปสู่ผู้อื่นได้", points: 100 },
-    { text: "การเชื่อมต่อ Wi-Fi สาธารณะที่ไม่มีรหัสผ่านเพื่อทำธุรกรรมหรือล็อกอินบัญชีสำคัญ ปลอดภัยหรือไม่?", answer: "ไม่ปลอดภัย อาจถูกดักจับข้อมูลรหัสผ่านได้", points: 100 }
+    { text: "เธเธทเนเธญ-เธเธฒเธกเธชเธเธธเธฅเธเธฃเธดเธเธเธญเธเธเธฑเธ", answer: "เธเธงเธฃเธเธเธเนเธญเธ", points: 100 },
+    { text: "เน€เธฅเธเธ—เธตเนเธเนเธฒเธเนเธฅเธฐเธเธทเนเธญเธซเธกเธนเนเธเนเธฒเธ/เธเธญเธขเธ—เธตเนเธเธฑเธเธญเธขเธนเน", answer: "เธเธงเธฃเธเธเธเนเธญเธ", points: 100 },
+    { text: "เน€เธเธญเธฃเนเนเธ—เธฃเธจเธฑเธเธ—เนเธเธญเธเธเนเธญเนเธกเนเธเธฑเธ", answer: "เธเธงเธฃเธเธเธเนเธญเธ", points: 100 },
+    { text: "เธฃเธซเธฑเธชเธเนเธฒเธเธเธฑเธเธเธตเน€เธเธกเธเธญเธเธเธฑเธ", answer: "เธเธงเธฃเธเธเธเนเธญเธ", points: 100 },
+    { text: "เน€เธฅเธเธเธฑเธ•เธฃเธเธฃเธฐเธเธณเธ•เธฑเธงเธเธฃเธฐเธเธฒเธเธเธเธญเธเธเธฑเธ", answer: "เธเธงเธฃเธเธเธเนเธญเธ", points: 100 },
+    { text: "เธฃเธนเธเธ–เนเธฒเธขเธเธฑเธเนเธเธเธธเธ”เธเธฑเธเน€เธฃเธตเธขเธเธ—เธตเนเน€เธซเนเธเธเนเธฒเธขเธเธทเนเธญเนเธฃเธเน€เธฃเธตเธขเธเธเธฑเธ”เน€เธเธ", answer: "เธเธงเธฃเธเธเธเนเธญเธ", points: 100 },
+    { text: "เธ•เธฒเธฃเธฒเธเน€เธงเธฅเธฒเธ—เธตเนเธเธฑเธเนเธเน€เธฃเธตเธขเธเธเธดเน€เธจเธฉเธ—เธธเธเธงเธฑเธเธญเธฑเธเธเธฒเธฃเนเธฅเธฐเธเธคเธซเธฑเธชเธเธ”เธต", answer: "เธเธงเธฃเธเธเธเนเธญเธ", points: 100 },
+    { text: "เธเธทเนเธญเนเธฃเธเน€เธฃเธตเธขเธเธเธฃเนเธญเธกเธซเนเธญเธเน€เธฃเธตเธขเธเธเธญเธเธเธฑเธ", answer: "เธเธงเธฃเธเธเธเนเธญเธ", points: 100 },
+    { text: "เธญเธตเน€เธกเธฅเนเธฅเธฐเธฃเธซเธฑเธชเธเนเธฒเธเธ—เธตเนเนเธเนเน€เธเนเธฒเน€เธฃเธตเธขเธเธญเธญเธเนเธฅเธเน", answer: "เธเธงเธฃเธเธเธเนเธญเธ", points: 100 },
+    { text: "เธเธทเนเธญเธเธฑเธเธเธต Line เธซเธฃเธทเธญ Facebook เธ—เธตเนเนเธเนเธเธทเนเธญ-เธเธฒเธกเธชเธเธธเธฅเธเธฃเธดเธเธเธญเธเธเธฑเธ", answer: "เธเธงเธฃเธเธเธเนเธญเธ", points: 100 },
+    { text: "เธชเธตเธ—เธตเนเธเธฑเธเธเธญเธเธ—เธตเนเธชเธธเธ”", answer: "เน€เธเธดเธ”เน€เธเธขเนเธ”เน", points: 100 },
+    { text: "เธเธฒเธฃเนเธ•เธนเธเน€เธฃเธทเนเธญเธเนเธเธฃเธ”เธเธญเธเธเธฑเธ", answer: "เน€เธเธดเธ”เน€เธเธขเนเธ”เน", points: 100 },
+    { text: "เธญเธฒเธซเธฒเธฃเธ—เธตเนเธเธฑเธเธเธญเธเธเธดเธเธ—เธตเนเธชเธธเธ”", answer: "เน€เธเธดเธ”เน€เธเธขเนเธ”เน", points: 100 },
+    { text: "เธเธตเธฌเธฒเธ—เธตเนเธเธฑเธเธเธญเธเน€เธฅเนเธ", answer: "เน€เธเธดเธ”เน€เธเธขเนเธ”เน", points: 100 },
+    { text: "เธเธฒเธเธญเธ”เธดเน€เธฃเธเธเธญเธเธเธฑเธเนเธเธงเธฑเธเธซเธขเธธเธ”", answer: "เน€เธเธดเธ”เน€เธเธขเนเธ”เน", points: 100 },
+    { text: "เธเธเธดเธ”เธเธญเธเธชเธฑเธ•เธงเนเน€เธฅเธตเนเธขเธเธ—เธตเนเธเธฑเธเธญเธขเธฒเธเธกเธต", answer: "เน€เธเธดเธ”เน€เธเธขเนเธ”เน", points: 100 },
+    { text: "เธงเธดเธเธฒเธ—เธตเนเธเธฑเธเธเธญเธเน€เธฃเธตเธขเธเธ—เธตเนเธชเธธเธ”", answer: "เน€เธเธดเธ”เน€เธเธขเนเธ”เน", points: 100 },
+    { text: "เน€เธเธฅเธเธ—เธตเนเธเธฑเธเธเธญเธเธเธฑเธ", answer: "เน€เธเธดเธ”เน€เธเธขเนเธ”เน", points: 100 },
+    { text: "เธซเธเธฑเธเธชเธทเธญเน€เธฅเนเธกเนเธเธฃเธ”เธเธญเธเธเธฑเธ", answer: "เน€เธเธดเธ”เน€เธเธขเนเธ”เน", points: 100 }
   ];
 
   /* ---------------- SOUND FX ---------------- */
@@ -618,9 +625,9 @@
   let Backend = null;
 
   function makeLocalBackend(){
-    const K_SETS = 'fb_sets_v2';
-    const K_QS = 'fb_qs_v2_';
-    const K_GAME = 'fb_game_v2';
+    const K_SETS = 'fb_sets_v3';
+    const K_QS = 'fb_qs_v3_';
+    const K_GAME = 'fb_game_v3';
     const bus = new EventTarget();
 
     const get = (k, def) => { try{ return JSON.parse(localStorage.getItem(k)) || def; }catch(e){ return def; }};
@@ -631,11 +638,11 @@
       subscribeSets(cb){
         const update = () => {
           let sets = get(K_SETS, []);
-          if(!sets || sets.length === 0){
-            const defId = 'set-pdpa-default';
-            sets = [{ id: defId, name: DEFAULT_SET_NAME, usedQuestionIds: [], createdAt: Date.now() }];
+          if(sets && sets.some(s => s.id === 'set-pdpa-default' || s.name === DEFAULT_SET_NAME)){
+            sets = sets.filter(s => s.id !== 'set-pdpa-default' && s.name !== DEFAULT_SET_NAME);
             set(K_SETS, sets);
-            set(K_QS + defId, DEFAULT_QUESTIONS.map((q, idx)=>({ id: 'q-'+idx, ...q, createdAt: Date.now()+idx })));
+            localStorage.removeItem(K_QS + 'set-pdpa-default');
+            localStorage.removeItem(K_GAME);
           }
           cb(sets);
         };
@@ -715,22 +722,21 @@
       type: 'cloud',
       subscribeSets(cb){
         return db.collection('sets').orderBy('createdAt', 'asc').onSnapshot(async snap => {
-          if(snap.empty){
-            // Seed default dataset on first cloud connection
-            const ref = await db.collection('sets').add({
-              name: DEFAULT_SET_NAME,
-              usedQuestionIds: [],
-              createdAt: Date.now()
-            });
-            for(const [i, q] of DEFAULT_QUESTIONS.entries()){
-              await db.collection('sets').doc(ref.id).collection('questions').add({
-                ...q,
-                createdAt: Date.now() + i
-              });
+          let sets = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          const oldDefaultSets = sets.filter(s => s.id === 'set-pdpa-default' || s.name === DEFAULT_SET_NAME);
+          if(oldDefaultSets.length > 0){
+            for(const s of oldDefaultSets){
+              const qs = await db.collection('sets').doc(s.id).collection('questions').get();
+              for(const doc of qs.docs){ await doc.ref.delete(); }
+              await db.collection('sets').doc(s.id).delete();
+            }
+            const gDoc = await db.collection('game').doc('current').get();
+            if(gDoc.exists && oldDefaultSets.some(s => s.id === gDoc.data().setId)){
+              await db.collection('game').doc('current').delete();
             }
             return;
           }
-          cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+          cb(sets);
         }, err => {
           console.error(err);
           showToast('เชื่อมต่อฐานข้อมูลคลาวด์ไม่สำเร็จ');
@@ -822,6 +828,13 @@
   function renderSetSelect(){
     const sel = $('setSelect');
     sel.innerHTML = '';
+    if(!state.sets.length){
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = '-- เธขเธฑเธเนเธกเนเธกเธตเธเธธเธ”เธเธณเธ–เธฒเธก --';
+      sel.appendChild(opt);
+      return;
+    }
     state.sets.forEach(s => {
       const opt = document.createElement('option');
       opt.value = s.id;
@@ -834,6 +847,10 @@
   function renderSetsList(){
     const list = $('setsList');
     list.innerHTML = '';
+    if(!state.sets.length){
+      list.innerHTML = '<li style="color:var(--text-dim); padding:12px; font-size:13px; text-align:center;">เธขเธฑเธเนเธกเนเธกเธตเธเธธเธ”เธเธณเธ–เธฒเธก<br>เธเธดเธกเธเนเธเธทเนเธญเนเธฅเนเธงเธเธ” "เน€เธเธดเนเธก" เธ”เนเธฒเธเธเธ</li>';
+      return;
+    }
     state.sets.forEach(s => {
       const li = document.createElement('li');
       li.className = 'set-item' + (s.id === state.currentSetId ? ' active' : '');
@@ -895,7 +912,6 @@
   }
 
   function selectSet(id){
-    if(state.currentSetId === id) return;
     state.currentSetId = id;
     if(state.unsubQuestions) state.unsubQuestions();
     state.questions = [];
@@ -905,6 +921,8 @@
         $('tileCountInput').max = Math.max(1, qs.length);
         renderManageDetail();
       });
+    } else {
+      renderManageDetail();
     }
     renderSetSelect();
     renderSetsList();
@@ -1224,5 +1242,6 @@
 </script>
 </body>
 </html>
+
 
 
