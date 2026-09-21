@@ -1173,16 +1173,24 @@
 
     const customCfg = localStorage.getItem('custom_firebase_config');
     let db = null;
-    if(customCfg){
-      try {
-        const config = JSON.parse(customCfg);
-        if(!firebase.apps.length){
-          firebase.initializeApp(config);
-        }
-        db = firebase.firestore();
-      }catch(e){
-        console.error('Firebase Init Error:', e);
+    const defaultFirebaseConfig = {
+      apiKey: "AIzaSyAvbs4djWr1C7E9t1n8EgcA7G8g8lHOxZQ",
+      authDomain: "kusuma-flashcard.firebaseapp.com",
+      projectId: "kusuma-flashcard",
+      storageBucket: "kusuma-flashcard.firebasestorage.app",
+      messagingSenderId: "612148629293",
+      appId: "1:612148629293:web:1bc9e107c2c4ae22cd8da4",
+      measurementId: "G-50F8B77FPE"
+    };
+
+    try {
+      const config = customCfg ? JSON.parse(customCfg) : defaultFirebaseConfig;
+      if(!firebase.apps.length){
+        firebase.initializeApp(config);
       }
+      db = firebase.firestore();
+    } catch(e){
+      console.error('Firebase Init Error:', e);
     }
 
     Backend = db ? makeFirestoreBackend(db) : makeLocalBackend();
@@ -1216,4 +1224,5 @@
 </script>
 </body>
 </html>
+
 
