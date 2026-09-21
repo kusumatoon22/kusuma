@@ -444,7 +444,7 @@
         </label>
         <label class="control">
           <span class="control-label">จำนวนแผ่นป้าย</span>
-          <input type="number" id="tileCountInput" min="1" max="99" value="19">
+          <input type="number" id="tileCountInput" min="0" max="99" value="0">
         </label>
         <button type="button" id="newGameBtn" class="btn btn-gold">เริ่มเกมใหม่ (สุ่ม)</button>
         <button type="button" id="resetBoardBtn" class="btn btn-teal-outline">เปิดป้ายใหม่</button>
@@ -471,25 +471,34 @@
             เลือกหรือสร้างชุดคำถามทางซ้ายมือ
           </div>
           <div id="setDetail" hidden>
-            <div class="set-detail-head">
-              <input type="text" id="setNameEdit" class="set-name-edit" maxlength="80">
-              <div class="set-detail-actions">
-                <span id="usedPoolInfo" style="font-size:13px; color:var(--text-dim);"></span>
-                <button type="button" id="resetUsedBtn" class="btn btn-ghost btn-sm">ล้างประวัติที่สุ่มแล้ว</button>
-                <button type="button" id="deleteSetBtn" class="btn btn-danger-outline btn-sm">ลบชุดนี้</button>
-              </div>
+            <div id="setLocked" hidden style="text-align:center; padding:50px 20px;">
+              <p style="font-size:18px; margin-bottom:6px;">🔒 ชุด "<span id="setLockedName"></span>" มีรหัสผ่านป้องกันอยู่</p>
+              <p style="color:var(--text-dim); font-size:14px; margin-bottom:18px;">กรอกรหัสผ่านเพื่อแก้ไขคำถามในชุดนี้</p>
+              <button type="button" id="unlockSetBtn" class="btn btn-gold">ปลดล็อกเพื่อแก้ไข</button>
             </div>
-
-            <form id="addQuestionForm" class="add-question-form">
-              <textarea id="qText" placeholder="พิมพ์คำถามที่นี่..." required maxlength="500"></textarea>
-              <div class="add-question-row">
-                <input type="text" id="qAnswer" placeholder="เฉลยคำตอบ (ถ้ามี)" maxlength="300">
-                <input type="number" id="qPoints" placeholder="คะแนน" value="100" min="0" step="10">
-                <button type="submit" class="btn btn-gold btn-sm">เพิ่มคำถาม</button>
+            <div id="setUnlockedArea">
+              <div class="set-detail-head">
+                <input type="text" id="setNameEdit" class="set-name-edit" maxlength="80">
+                <div class="set-detail-actions">
+                  <span id="usedPoolInfo" style="font-size:13px; color:var(--text-dim);"></span>
+                  <button type="button" id="setPasswordBtn" class="btn btn-teal-outline btn-sm">🔒 ตั้งรหัสผ่านป้องกัน</button>
+                  <button type="button" id="removeSetPasswordBtn" class="btn btn-ghost btn-sm" hidden>ยกเลิกรหัสผ่าน</button>
+                  <button type="button" id="resetUsedBtn" class="btn btn-ghost btn-sm">ล้างประวัติที่สุ่มแล้ว</button>
+                  <button type="button" id="deleteSetBtn" class="btn btn-danger-outline btn-sm">ลบชุดนี้</button>
+                </div>
               </div>
-            </form>
 
-            <ol id="questionsList" class="questions-list"></ol>
+              <form id="addQuestionForm" class="add-question-form">
+                <textarea id="qText" placeholder="พิมพ์คำถามที่นี่..." required maxlength="500"></textarea>
+                <div class="add-question-row">
+                  <input type="text" id="qAnswer" placeholder="เฉลยคำตอบ (ถ้ามี)" maxlength="300">
+                  <input type="number" id="qPoints" placeholder="คะแนน" value="100" min="0" step="10">
+                  <button type="submit" class="btn btn-gold btn-sm">เพิ่มคำถาม</button>
+                </div>
+              </form>
+
+              <ol id="questionsList" class="questions-list"></ol>
+            </div>
           </div>
         </section>
       </div>
@@ -521,10 +530,11 @@
 <div id="pinOverlay" class="overlay" hidden>
   <div class="overlay-backdrop" data-close="1"></div>
   <div class="overlay-panel pin-panel">
-    <div class="overlay-head"><span class="tile-badge">เข้าสู่ระบบแอดมิน</span></div>
-    <p class="pin-desc">กรุณากรอกรหัสผ่านเพื่อเข้าจัดการคำถามหรือตั้งค่า (ค่าเริ่มต้น: <b>1234</b>)</p>
+    <div class="overlay-head"><span class="tile-badge" id="pinTitle">เข้าสู่ระบบแอดมิน</span></div>
+    <p class="pin-desc" id="pinDesc">กรุณากรอกรหัสผ่านเพื่อเข้าจัดการคำถามหรือตั้งค่า</p>
     <form id="pinForm" class="pin-form">
-      <input type="password" id="pinInput" placeholder="รหัสผ่าน" required>
+      <input type="password" id="pinInput" placeholder="รหัสผ่าน" required minlength="4" autocomplete="off">
+      <input type="password" id="pinInput2" placeholder="ยืนยันรหัสผ่านอีกครั้ง" minlength="4" autocomplete="off" hidden>
       <p id="pinError" class="pin-error" hidden>รหัสผ่านไม่ถูกต้อง!</p>
       <div class="overlay-actions">
         <button type="button" id="pinCancelBtn" class="btn btn-ghost">ยกเลิก</button>
@@ -566,8 +576,19 @@
 (function(){
   "use strict";
 
-  const ADMIN_PIN = "1234";
-  const DEFAULT_SET_NAME = "เธเธนเนเธเธดเธ—เธฑเธเธฉเนเธเนเธญเธกเธนเธฅเธชเนเธงเธเธ•เธฑเธง";
+  async function sha256Hex(text){
+    try{
+      const enc = new TextEncoder().encode(text);
+      const buf = await crypto.subtle.digest('SHA-256', enc);
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }catch(e){
+      // Fallback for environments without Web Crypto (e.g. non-secure context)
+      let h = 0;
+      for(let i = 0; i < text.length; i++){ h = (Math.imul(31, h) + text.charCodeAt(i)) | 0; }
+      return 'fb' + Math.abs(h).toString(16);
+    }
+  }
+  const DEFAULT_SET_NAME ="เธเธนเนเธเธดเธ—เธฑเธเธฉเนเธเนเธญเธกเธนเธฅเธชเนเธงเธเธ•เธฑเธง";
   const DEFAULT_QUESTIONS = [
     { text: "เธเธทเนเธญ-เธเธฒเธกเธชเธเธธเธฅเธเธฃเธดเธเธเธญเธเธเธฑเธ", answer: "เธเธงเธฃเธเธเธเนเธญเธ", points: 100 },
     { text: "เน€เธฅเธเธ—เธตเนเธเนเธฒเธเนเธฅเธฐเธเธทเนเธญเธซเธกเธนเนเธเนเธฒเธ/เธเธญเธขเธ—เธตเนเธเธฑเธเธญเธขเธนเน", answer: "เธเธงเธฃเธเธเธเนเธญเธ", points: 100 },
@@ -713,6 +734,16 @@
       async writeGame(gameData){
         set(K_GAME, gameData);
         bus.dispatchEvent(new Event('game'));
+      },
+      async setSetPassword(setId, hashOrNull){
+        const sets = get(K_SETS, []);
+        const s = sets.find(x => x.id === setId);
+        if(s){
+          if(hashOrNull) s.passwordHash = hashOrNull;
+          else delete s.passwordHash;
+        }
+        set(K_SETS, sets);
+        bus.dispatchEvent(new Event('sets'));
       }
     };
   }
@@ -777,6 +808,13 @@
       },
       async writeGame(gameData){
         await db.collection('game').doc('current').set(gameData);
+      },
+      async setSetPassword(setId, hashOrNull){
+        if(hashOrNull){
+          await db.collection('sets').doc(setId).update({ passwordHash: hashOrNull });
+        } else {
+          await db.collection('sets').doc(setId).update({ passwordHash: firebase.firestore.FieldValue.delete() });
+        }
       }
     };
   }
@@ -790,8 +828,24 @@
     unsubSets: null,
     unsubQuestions: null,
     unsubGame: null,
-    manageUnlocked: false
+    gameStarted: false,
+    unlockedSetIds: (() => {
+      try{ return new Set(JSON.parse(sessionStorage.getItem('fb_unlocked_sets') || '[]')); }
+      catch(e){ return new Set(); }
+    })()
   };
+
+  function saveUnlockedSets(){
+    try{ sessionStorage.setItem('fb_unlocked_sets', JSON.stringify([...state.unlockedSetIds])); }catch(e){}
+  }
+  function getSetById(id){
+    return state.sets.find(s => s.id === id);
+  }
+  function isSetUnlocked(id){
+    const s = getSetById(id);
+    if(!s || !s.passwordHash) return true;
+    return state.unlockedSetIds.has(id);
+  }
 
   const TILE_PALETTE = [
     { bg:'#FF5A5F', edge:'#C23239', icon:'🛡️' },
@@ -803,6 +857,11 @@
   ];
 
   function $(id){ return document.getElementById(id); }
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
 
   function showToast(msg){
     const t = $('toast');
@@ -831,7 +890,7 @@
     if(!state.sets.length){
       const opt = document.createElement('option');
       opt.value = '';
-      opt.textContent = '-- เธขเธฑเธเนเธกเนเธกเธตเธเธธเธ”เธเธณเธ–เธฒเธก --';
+      opt.textContent = '-- ยังไม่มีชุดคำถาม --';
       sel.appendChild(opt);
       return;
     }
@@ -848,23 +907,28 @@
     const list = $('setsList');
     list.innerHTML = '';
     if(!state.sets.length){
-      list.innerHTML = '<li style="color:var(--text-dim); padding:12px; font-size:13px; text-align:center;">เธขเธฑเธเนเธกเนเธกเธตเธเธธเธ”เธเธณเธ–เธฒเธก<br>เธเธดเธกเธเนเธเธทเนเธญเนเธฅเนเธงเธเธ” "เน€เธเธดเนเธก" เธ”เนเธฒเธเธเธ</li>';
+      list.innerHTML = '<li style="color:var(--text-dim); padding:12px; font-size:13px; text-align:center;">ยังไม่มีชุดคำถาม<br>พิมพ์ชื่อแล้วกด &quot;เพิ่ม&quot; ด้านบน</li>';
       return;
     }
     state.sets.forEach(s => {
       const li = document.createElement('li');
       li.className = 'set-item' + (s.id === state.currentSetId ? ' active' : '');
-      li.innerHTML = `<span class="set-item-name">${s.name}</span><button type="button" class="set-item-del">ลบ</button>`;
+      const lockIcon = s.passwordHash ? '🔒 ' : '';
+      li.innerHTML = `<span class="set-item-name">${lockIcon}${s.name}</span><button type="button" class="set-item-del">ลบ</button>`;
       li.querySelector('.set-item-name').onclick = () => selectSet(s.id);
       li.querySelector('.set-item-del').onclick = (e) => {
         e.stopPropagation();
-        if(confirm(`ยืนยันลบชุดคำถาม "${s.name}" ?`)){
-          Backend.deleteSet(s.id);
-        }
+        requireSetUnlock(s.id, () => {
+          if(confirm(`ยืนยันลบชุดคำถาม "${s.name}" ?`)){
+            Backend.deleteSet(s.id);
+          }
+        });
       };
       list.appendChild(li);
     });
   }
+
+  let editingQId = null;
 
   function renderQuestionsList(){
     const list = $('questionsList');
@@ -876,22 +940,64 @@
     state.questions.forEach((q, idx) => {
       const li = document.createElement('li');
       li.className = 'q-row';
-      li.innerHTML = `
-        <span class="q-idx">${idx + 1}.</span>
-        <div class="q-body">
-          <p class="q-text">${q.text}</p>
-          <div class="q-meta">
-            <span>${q.points || 0} คะแนน</span>
-            ${q.answer ? `<span class="q-answer">เฉลย: ${q.answer}</span>` : ''}
+
+      if(editingQId === q.id){
+        li.innerHTML = `
+          <span class="q-idx">${idx + 1}.</span>
+          <div class="q-body">
+            <textarea class="q-edit-text" maxlength="500" required>${escapeHtml(q.text)}</textarea>
+            <div class="add-question-row" style="margin-top:8px;">
+              <input type="text" class="q-edit-answer" style="flex:1; min-width:160px;" placeholder="เฉลยคำตอบ (ถ้ามี)" maxlength="300" value="${escapeHtml(q.answer || '')}">
+              <input type="number" class="q-edit-points" style="width:90px;" placeholder="คะแนน" value="${q.points || 0}" min="0" step="10">
+            </div>
           </div>
-        </div>
-        <div class="q-actions">
-          <button type="button" class="q-del">ลบ</button>
-        </div>
-      `;
-      li.querySelector('.q-del').onclick = () => {
-        if(confirm('ลบคำถามข้อนี้?')) Backend.deleteQuestion(state.currentSetId, q.id);
-      };
+          <div class="q-actions">
+            <button type="button" class="q-save">บันทึกการแก้ไข</button>
+            <button type="button" class="q-cancel">ยกเลิก</button>
+          </div>
+        `;
+        li.querySelector('.q-save').onclick = async () => {
+          const text = li.querySelector('.q-edit-text').value.trim();
+          const answer = li.querySelector('.q-edit-answer').value.trim();
+          const points = parseInt(li.querySelector('.q-edit-points').value) || 0;
+          if(!text){ showToast('กรุณากรอกคำถาม'); return; }
+          await Backend.updateQuestion(state.currentSetId, q.id, { text, answer, points });
+          editingQId = null;
+          showToast('บันทึกการแก้ไขแล้ว');
+        };
+        li.querySelector('.q-cancel').onclick = () => {
+          editingQId = null;
+          renderQuestionsList();
+        };
+      } else {
+        const showPoints = q.showPoints !== false;
+        li.innerHTML = `
+          <span class="q-idx">${idx + 1}.</span>
+          <div class="q-body">
+            <p class="q-text">${escapeHtml(q.text)}</p>
+            <div class="q-meta">
+              <span>${q.points || 0} คะแนน${showPoints ? '' : ' (ไม่แสดงตอนเล่น)'}</span>
+              ${q.answer ? `<span class="q-answer">เฉลย: ${escapeHtml(q.answer)}</span>` : ''}
+            </div>
+          </div>
+          <div class="q-actions">
+            <button type="button" class="q-toggle-points">${showPoints ? '🙈 ไม่แสดงคะแนน' : '👁️ แสดงคะแนน'}</button>
+            <button type="button" class="q-edit">แก้ไข</button>
+            <button type="button" class="q-del">ลบ</button>
+          </div>
+        `;
+        li.querySelector('.q-toggle-points').onclick = () => {
+          Backend.updateQuestion(state.currentSetId, q.id, { showPoints: !showPoints });
+        };
+        li.querySelector('.q-edit').onclick = () => {
+          editingQId = q.id;
+          renderQuestionsList();
+        };
+        li.querySelector('.q-del').onclick = () => {
+          if(confirm('ลบคำถามข้อนี้?')) Backend.deleteQuestion(state.currentSetId, q.id);
+        };
+      }
+
       list.appendChild(li);
     });
   }
@@ -905,9 +1011,20 @@
     }
     $('noSetSelected').hidden = true;
     $('setDetail').hidden = false;
+
+    const locked = !isSetUnlocked(cur.id);
+    $('setLocked').hidden = !locked;
+    $('setUnlockedArea').hidden = locked;
+    if(locked){
+      $('setLockedName').textContent = cur.name;
+      return;
+    }
+
     $('setNameEdit').value = cur.name;
     const used = (cur.usedQuestionIds || []).filter(id => state.questions.some(q => q.id === id)).length;
     $('usedPoolInfo').textContent = `สุ่มแล้ว ${used} / ${state.questions.length} ข้อ`;
+    $('setPasswordBtn').textContent = cur.passwordHash ? '🔑 เปลี่ยนรหัสผ่าน' : '🔒 ตั้งรหัสผ่านป้องกัน';
+    $('removeSetPasswordBtn').hidden = !cur.passwordHash;
     renderQuestionsList();
   }
 
@@ -931,9 +1048,9 @@
   function renderBoard(){
     const b = $('board');
     b.innerHTML = '';
-    const game = state.game;
+    const game = state.gameStarted ? state.game : null;
     if(!game || !game.tiles || !game.tiles.length){
-      b.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px; background:var(--panel); border-radius:20px; color:var(--text-dim);">กดปุ่ม "เริ่มเกมใหม่" เพื่อเปิดแผ่นป้าย</div>';
+      b.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px; background:var(--panel); border-radius:20px; color:var(--text-dim);">เลือกชุดคำถาม เลือกจำนวนแผ่นป้าย แล้วกดปุ่ม "เริ่มเกมใหม่" เพื่อเริ่มเล่น</div>';
       $('progressText').textContent = '0 / 0';
       return;
     }
@@ -958,7 +1075,7 @@
   }
 
   async function openTile(idx){
-    if(!state.game) return;
+    if(!state.gameStarted || !state.game) return;
     const g = JSON.parse(JSON.stringify(state.game));
     if(!g.tiles[idx] || g.tiles[idx].done) return;
     g.tiles[idx].revealed = true;
@@ -968,7 +1085,7 @@
   }
 
   async function closeTile(markDone){
-    if(!state.game || state.game.openIndex == null) return;
+    if(!state.gameStarted || !state.game || state.game.openIndex == null) return;
     const g = JSON.parse(JSON.stringify(state.game));
     if(markDone && g.tiles[g.openIndex]){
       g.tiles[g.openIndex].done = true;
@@ -979,13 +1096,14 @@
   }
 
   function renderOverlay(){
-    const game = state.game;
+    const game = state.gameStarted ? state.game : null;
     if(!game || game.openIndex == null || !game.tiles[game.openIndex]){
       $('overlay').hidden = true;
       return;
     }
     const t = game.tiles[game.openIndex];
     $('overlayNum').textContent = `แผ่นป้ายที่ ${t.num}`;
+    $('overlayPoints').hidden = t.showPoints === false;
     $('overlayPoints').textContent = `${t.points || 0} คะแนน`;
     $('overlayQuestion').textContent = t.text;
     $('overlayAnswer').textContent = t.answer ? `เฉลย: ${t.answer}` : '';
@@ -1014,10 +1132,15 @@
 
   $('newGameBtn').onclick = async () => {
     if(!state.currentSetId || !state.questions.length){
-      showToast('ไม่มีคำถามในชุดนี้');
+      showToast('กรุณาเลือกชุดคำถามที่มีคำถามอยู่ก่อน');
       return;
     }
-    const count = Math.min(parseInt($('tileCountInput').value) || 12, state.questions.length);
+    const countRaw = parseInt($('tileCountInput').value);
+    if(!countRaw || countRaw < 1){
+      showToast('กรุณาเลือกจำนวนแผ่นป้ายก่อนเริ่มเกม');
+      return;
+    }
+    const count = Math.min(countRaw, state.questions.length);
     const cur = state.sets.find(s => s.id === state.currentSetId);
     let used = cur.usedQuestionIds || [];
     let pool = state.questions.filter(q => !used.includes(q.id));
@@ -1037,6 +1160,7 @@
       text: q.text,
       answer: q.answer || '',
       points: q.points || 0,
+      showPoints: q.showPoints !== false,
       revealed: false,
       done: false
     }));
@@ -1048,11 +1172,12 @@
       openIndex: null,
       updatedAt: Date.now()
     });
+    state.gameStarted = true;
     playChime();
   };
 
   $('resetBoardBtn').onclick = async () => {
-    if(!state.game || !state.game.tiles) return;
+    if(!state.gameStarted || !state.game || !state.game.tiles) return;
     const g = JSON.parse(JSON.stringify(state.game));
     g.tiles.forEach(t => { t.revealed = false; t.done = false; });
     g.openIndex = null;
@@ -1060,43 +1185,135 @@
     playPop();
   };
 
-  $('setSelect').onchange = (e) => selectSet(e.target.value);
+  $('setSelect').onchange = (e) => {
+    state.gameStarted = false;
+    selectSet(e.target.value);
+    renderBoard();
+    renderOverlay();
+  };
 
-  // Tabs & Admin PIN
+  // Tabs & Per-Set Password
   let pinAction = null;
-  function requireAdmin(action){
-    if(state.manageUnlocked){
-      action();
-      return;
-    }
+  let pinMode = 'verify';
+  let pinTargetSetId = null;
+
+  function openSetPinOverlay(mode, setId, action){
+    pinMode = mode;
+    pinTargetSetId = setId;
     pinAction = action;
+    const s = getSetById(setId);
+    const setName = s ? s.name : '';
     $('pinError').hidden = true;
     $('pinInput').value = '';
+    $('pinInput2').value = '';
+    if(mode === 'verify'){
+      $('pinTitle').textContent = 'ปลดล็อกชุดคำถาม';
+      $('pinDesc').textContent = `กรอกรหัสผ่านเพื่อแก้ไขชุด "${setName}"`;
+      $('pinInput').placeholder = 'รหัสผ่าน';
+      $('pinInput2').hidden = true;
+      $('pinInput2').required = false;
+    } else if(mode === 'setup'){
+      $('pinTitle').textContent = 'ตั้งรหัสผ่านป้องกันชุดนี้';
+      $('pinDesc').textContent = `ตั้งรหัสผ่านสำหรับชุด "${setName}" (อย่างน้อย 4 ตัวอักษร)`;
+      $('pinInput').placeholder = 'ตั้งรหัสผ่านใหม่';
+      $('pinInput2').hidden = false;
+      $('pinInput2').required = true;
+      $('pinInput2').placeholder = 'ยืนยันรหัสผ่านอีกครั้ง';
+    } else if(mode === 'change'){
+      $('pinTitle').textContent = 'เปลี่ยนรหัสผ่าน';
+      $('pinDesc').textContent = `ตั้งรหัสผ่านใหม่สำหรับชุด "${setName}"`;
+      $('pinInput').placeholder = 'รหัสผ่านใหม่';
+      $('pinInput2').hidden = false;
+      $('pinInput2').required = true;
+      $('pinInput2').placeholder = 'ยืนยันรหัสผ่านอีกครั้ง';
+    }
     $('pinOverlay').hidden = false;
     $('pinInput').focus();
   }
 
-  $('pinForm').onsubmit = (e) => {
+  function requireSetUnlock(setId, action){
+    if(isSetUnlocked(setId)){
+      action();
+      return;
+    }
+    openSetPinOverlay('verify', setId, action);
+  }
+
+  $('pinForm').onsubmit = async (e) => {
     e.preventDefault();
-    if($('pinInput').value === ADMIN_PIN){
-      state.manageUnlocked = true;
-      $('pinOverlay').hidden = true;
-      if(pinAction) pinAction();
-    } else {
+    const val = $('pinInput').value;
+    const s = getSetById(pinTargetSetId);
+
+    if(pinMode === 'verify'){
+      const hash = await sha256Hex(val);
+      if(s && hash === s.passwordHash){
+        state.unlockedSetIds.add(pinTargetSetId);
+        saveUnlockedSets();
+        $('pinOverlay').hidden = true;
+        renderManageDetail();
+        if(pinAction) pinAction();
+      } else {
+        $('pinError').textContent = 'รหัสผ่านไม่ถูกต้อง!';
+        $('pinError').hidden = false;
+        $('pinInput').value = '';
+        $('pinInput').focus();
+      }
+      return;
+    }
+
+    // setup or change: two password fields must match
+    if(val.length < 4){
+      $('pinError').textContent = 'รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร';
       $('pinError').hidden = false;
-      $('pinInput').value = '';
+      return;
+    }
+    if(val !== $('pinInput2').value){
+      $('pinError').textContent = 'รหัสผ่านทั้งสองช่องไม่ตรงกัน';
+      $('pinError').hidden = false;
+      $('pinInput2').value = '';
+      $('pinInput2').focus();
+      return;
+    }
+    try{
+      const hash = await sha256Hex(val);
+      await Backend.setSetPassword(pinTargetSetId, hash);
+      if(s) s.passwordHash = hash;
+      state.unlockedSetIds.add(pinTargetSetId);
+      saveUnlockedSets();
+      $('pinOverlay').hidden = true;
+      showToast(pinMode === 'setup' ? 'ตั้งรหัสผ่านเรียบร้อยแล้ว' : 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว');
+      renderManageDetail();
+      if(pinAction) pinAction();
+    }catch(err){
+      console.error(err);
+      $('pinError').textContent = 'บันทึกรหัสผ่านไม่สำเร็จ กรุณาลองใหม่';
+      $('pinError').hidden = false;
     }
   };
   $('pinCancelBtn').onclick = () => $('pinOverlay').hidden = true;
 
+  $('unlockSetBtn').onclick = () => {
+    requireSetUnlock(state.currentSetId, () => {});
+  };
+  $('setPasswordBtn').onclick = () => {
+    const cur = getSetById(state.currentSetId);
+    if(!cur) return;
+    openSetPinOverlay(cur.passwordHash ? 'change' : 'setup', cur.id, () => {});
+  };
+  $('removeSetPasswordBtn').onclick = () => {
+    const cur = getSetById(state.currentSetId);
+    if(!cur) return;
+    if(confirm(`ยกเลิกการป้องกันด้วยรหัสผ่านสำหรับชุด "${cur.name}" ?`)){
+      Backend.setSetPassword(cur.id, null);
+      delete cur.passwordHash;
+      renderManageDetail();
+      showToast('ยกเลิกการป้องกันแล้ว');
+    }
+  };
+
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.onclick = () => {
-      const view = btn.dataset.view;
-      if(view === 'manage'){
-        requireAdmin(() => switchTab(view));
-      } else {
-        switchTab(view);
-      }
+      switchTab(btn.dataset.view);
     };
   });
 
@@ -1143,7 +1360,7 @@
     const answer = $('qAnswer').value.trim();
     const points = parseInt($('qPoints').value) || 100;
     if(text && state.currentSetId){
-      await Backend.addQuestion(state.currentSetId, { text, answer, points });
+      await Backend.addQuestion(state.currentSetId, { text, answer, points, showPoints: true });
       $('qText').value = '';
       $('qAnswer').value = '';
       $('qText').focus();
@@ -1152,10 +1369,8 @@
 
   // Cloud Config Modal
   $('cloudConfigBtn').onclick = () => {
-    requireAdmin(() => {
-      $('firebaseConfigInput').value = localStorage.getItem('custom_firebase_config') || '';
-      $('cloudOverlay').hidden = false;
-    });
+    $('firebaseConfigInput').value = localStorage.getItem('custom_firebase_config') || '';
+    $('cloudOverlay').hidden = false;
   };
   $('cloudCancelBtn').onclick = () => $('cloudOverlay').hidden = true;
 
